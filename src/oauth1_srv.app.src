@@ -1,0 +1,14 @@
+{ application
+, oauth1_srv
+, [ {description  , "OAuth 1.0 server implementation."}
+  , {vsn          , "0.0.0"}
+  , {registered   , []}
+  , {applications ,
+      [ kernel
+      , stdlib
+      ]}
+  , {mod, {oauth1_srv_app, []}}
+  , {env,
+      [
+      ]}
+  ]}.
