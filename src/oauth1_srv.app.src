@@ -25,5 +25,7 @@
       , {password            , "ch4ng3m3"}
 
       , {uri_prefix          , none}  % none | {some, binary()}
+
+      , {authentication_module , oauth1_srv_authentication_default}
       ]}
   ]}.
