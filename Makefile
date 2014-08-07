@@ -33,4 +33,4 @@ clean:
 	@rm -rf ebin/
 
 dialyze:
-	@dialyzer ebin
+	@dialyzer deps/*/ebin ebin
