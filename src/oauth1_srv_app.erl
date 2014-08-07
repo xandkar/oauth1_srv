@@ -92,7 +92,29 @@ opts_trans_cert() ->
       }
     ].
 routes() ->
-    [].
+    URIPrefix = ?cfg:get(uri_prefix),
+    MakeURI =
+        fun(URIPath0) ->
+            URIPath =
+                case URIPrefix
+                of  {some, URIPrefix0} -> [URIPrefix0 | URIPath0]
+                ;   none               ->               URIPath0
+                end,
+            bstr:join([<<>> | URIPath], <<"/">>)
+        end,
+    [ { MakeURI([<<"initiate">>])
+      , oauth1_srv_handler_initiate
+      , []
+      }
+    , { MakeURI([<<"authorize">>])
+      , oauth1_srv_handler_authorize
+      , []
+      }
+    , { MakeURI([<<"token">>])
+      , oauth1_srv_handler_token
+      , []
+      }
+    ].
 
 
 %% ============================================================================
