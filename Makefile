@@ -25,6 +25,9 @@ deps_update:
 compile:
 	@rebar compile
 
+console:
+	@erl -pa `pwd`/deps/*/ebin -pa `pwd`/ebin
+
 clean:
 	@rebar clean
 	@rm -rf ebin/
