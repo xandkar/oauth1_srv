@@ -6,9 +6,22 @@
   , {applications ,
       [ kernel
       , stdlib
+      , cowboy
       ]}
   , {mod, {oauth1_srv_app, []}}
   , {env,
-      [
+      [ {listen_port         , 8443}
+      , {listen_ip           , {0, 0, 0, 0}}
+      , {listener_name       , oauth1_srv_listener}
+      , {number_of_acceptors , 100}
+      , {middlewares         , []}
+
+      , {dir_ssl_data        , priv_ssl}  % 'priv_ssl' | {custom, string()}
+      , {file_cert_ca        , "ca.crt"}
+      , {file_cert           , "server.crt"}
+      , {file_key            , "server.key"}
+      , {password            , "ch4ng3m3"}
+
+      , {uri_prefix          , none}  % none | {some, binary()}
       ]}
   ]}.

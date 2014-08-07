@@ -3,6 +3,7 @@
 -export(
     [ get/1
     , get/2
+    , get_ssl_dir/0
     ]).
 
 
@@ -15,3 +16,13 @@ get(Name) ->
 
 get(Name, Default) ->
     application:get_env(?APP, Name, Default).
+
+
+-spec get_ssl_dir() ->
+    string().
+get_ssl_dir() ->
+    PrivSSL = priv_ssl,
+    case get(dir_ssl_data, PrivSSL)
+    of  PrivSSL       -> filename:join(code:priv_dir(?APP), "ssl")
+    ;   {custom, Dir} -> Dir
+    end.
