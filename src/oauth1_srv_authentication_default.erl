@@ -10,7 +10,7 @@
 
 is_client(Req) ->
     % This should be fine for a default behavior, since client identity will be
-    % varified at the OAuth level.
+    % verified at the OAuth level.
     {ok, {true, Req}}.
 
 is_owner(Req) ->
