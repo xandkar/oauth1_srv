@@ -62,13 +62,11 @@ start_server() ->
         [ {env         , [{dispatch, Dispatch}]}
         , {middlewares , Middlewares}
         ],
-    Res = cowboy:start_https( ListenerName
+    {ok, _} = cowboy:start_https( ListenerName
                                 , NumberOfAcceptors
                                 , TransOpts
                                 , ProtoOpts
                                 ),
-    io:format("cowboy:start_https(...) -> ~p~n", [Res]),
-    {ok, _} = Res,
     ok.
 
 -spec opts_trans_cert() ->
