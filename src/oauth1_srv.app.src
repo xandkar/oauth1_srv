@@ -9,6 +9,7 @@
       , hope
       , bstr
       , cowboy
+      , lager
       ]}
   , {mod, {oauth1_srv_app, []}}
   , {env,
