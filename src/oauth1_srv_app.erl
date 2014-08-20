@@ -137,8 +137,7 @@ app_find_deps(App) ->
     {ok, Deps1} = application:get_key(App, applications),
     Deps2 = Deps1 ++ [app_find_deps(D) || D <- Deps1],
     Deps3 = lists:flatten(Deps2),
-    Deps4 = hope_list:unique_preserve_order(Deps3),
-    Deps4.
+    Deps3.
 
 app_load(App) ->
     Ok = ok,
