@@ -10,6 +10,15 @@
 	dialyze \
 	test
 
+ci: \
+	fresh_build \
+	remove_cover_spec_from_deps \
+	test
+
+# A kludge to avoid the conflict of cover.spec files with Travis' rebar
+remove_cover_spec_from_deps:
+	@find deps -name cover.spec -exec rm '{}' \;
+
 fresh_build: \
 	clean_all \
 	deps \
