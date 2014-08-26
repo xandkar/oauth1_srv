@@ -15,7 +15,8 @@ ci: \
 	remove_cover_spec_from_deps \
 	test
 
-# A kludge to avoid the conflict of cover.spec files with Travis' rebar
+# A kludge to avoid the conflict of cover.spec files (happens with some
+# versions of rebar, Travis' being one of them).
 remove_cover_spec_from_deps:
 	@find deps -name cover.spec -exec rm '{}' \;
 
