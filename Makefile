@@ -3,14 +3,16 @@
 	deps \
 	deps_get \
 	deps_update \
-	compile \
-	clean \
+	compile_all \
+	compile_app \
+	clean_all \
+	clean_app \
 	dialyze
 
 fresh_build: \
-	clean \
+	clean_all \
 	deps \
-	compile
+	compile_all
 
 deps: \
 	deps_get \
@@ -22,14 +24,21 @@ deps_get:
 deps_update:
 	@rebar update-deps
 
-compile:
-	@rebar compile
+compile_app:
+	@rebar compile skip_deps=true
+
+compile_all:
+	@rebar compile skip_deps=false
 
 console:
 	@erl -pa `pwd`/deps/*/ebin -pa `pwd`/ebin
 
-clean:
-	@rebar clean
+clean_all:
+	@rebar clean skip_deps=false
+	@rm -rf ebin/
+
+clean_app:
+	@rebar clean skip_deps=true
 	@rm -rf ebin/
 
 dialyze:
