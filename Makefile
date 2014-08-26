@@ -7,7 +7,8 @@
 	compile_app \
 	clean_all \
 	clean_app \
-	dialyze
+	dialyze \
+	test
 
 fresh_build: \
 	clean_all \
@@ -43,3 +44,6 @@ clean_app:
 
 dialyze:
 	@dialyzer deps/*/ebin ebin
+
+test:
+	@rebar ct skip_deps=true --verbose=0

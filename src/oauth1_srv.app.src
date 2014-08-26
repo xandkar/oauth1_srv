@@ -10,6 +10,7 @@
       , bstr
       , cowboy
       , lager
+      , oauth1_core
       ]}
   , {mod, {oauth1_srv_app, []}}
   , {env,
