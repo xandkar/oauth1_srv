@@ -84,6 +84,7 @@ content_handler(R1, #state{}=S) ->
                 , fun oauth1_server:initiate/1
                 ],
             lager:info("Begin processing pipe."),
+            % TODO: Handle IO Errors
             case hope_result:pipe(Steps, Authorization)
             of  {error, {invalid_format, _}} ->
                     lager:info("Request error: header malformed: \"authorization\"."),

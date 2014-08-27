@@ -63,6 +63,7 @@ is_authorized(R1, #state{}=S) ->
 %% ============================================================================
 
 content_provider(R1, #state{}=S) ->
+    % TODO: Match IO Errors explicitly.
     case oauth1_server:register_new_client()
     of  {error, _}=IOError ->
             lager:error("IO error: ~p", [IOError]),
