@@ -65,12 +65,15 @@ is_authorized(R1, #state{}=S) ->
 content_handler(R1, #state{}=S) ->
     lager:info("Begin content_handler."),
     lager:info("Set resourse URI."),
+    % TODO: Grab host and endpoint from request. Duh!
     {ok, URI} = oauth1_uri:of_bin(<<"http://localhost/initiate">>),
     lager:info("Get authorization header."),
     case cowboy_req:header(<<"authorization">>, R1)
     of  {undefined, R2} ->
             lager:info("Error: header missing: \"authorization\"."),
-            Body = jsx:encode([{<<"error">>, [{<<"header_missing">>, <<"authorization">>}]}]),
+            ErrorData =
+               [{<<"error">>, [{<<"header_missing">>, <<"authorization">>}]}],
+            Body = jsx:encode(ErrorData),
             R3 = cowboy_req:set_resp_body(Body, R2),
             {false, R3, S}
     ;   {<<Authorization/binary>>, R2} ->
@@ -82,7 +85,6 @@ content_handler(R1, #state{}=S) ->
                 ],
             lager:info("Begin processing pipe."),
             case hope_result:pipe(Steps, Authorization)
-            % TODO: Handle specific errors
             of  {error, {invalid_format, _}} ->
                     lager:info("Request error: header malformed: \"authorization\"."),
                     ErrorData =
@@ -90,6 +92,7 @@ content_handler(R1, #state{}=S) ->
                           , [{<<"header_malformed">>, <<"authorization">>}]
                           }
                         ],
+                    % TODO: Resolve this violation of declared content type:
                     Body = jsx:encode(ErrorData),
                     R3 = cowboy_req:set_resp_body(Body, R2),
                     {false, R3, S}
@@ -113,6 +116,7 @@ content_handler(R1, #state{}=S) ->
                     {tmp, <<TmpTokenSecretBin/binary>>} = TmpTokenSecret,
                     IsCallbackConfirmedBin = boolean_to_bin(IsCallbackConfirmed),
                     Body =
+                        % TODO: Use cow_qs:qs/1
                         << "oauth_token"             , "=" , TmpTokenIDBin/binary
                          , "&"
                          , "oauth_token_secret"      , "=" , TmpTokenSecretBin/binary
@@ -121,9 +125,6 @@ content_handler(R1, #state{}=S) ->
                         >>,
                     R3 = cowboy_req:set_resp_body(Body, R2),
                     {true, R3, S}
-            ;   {ok, Ok} ->
-                    lager:info("Request ok, but not what we wanted: ~p", [Ok]),
-                    {false, R2, S}
             end
     end.
 
