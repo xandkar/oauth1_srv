@@ -12,7 +12,8 @@
 
 %% Tests
 -export(
-    [ t_initiate_ok/1
+    [ t_register_ok/1
+    , t_initiate_ok/1
     ]).
 
 
@@ -28,7 +29,8 @@ all() ->
 
 groups() ->
     Tests =
-        [ t_initiate_ok
+        [ t_register_ok
+        , t_initiate_ok
         ],
     Properties = [],
     [ {?GROUP, Properties, Tests}
@@ -46,6 +48,28 @@ end_per_suite(_Cfg) ->
 %%=============================================================================
 %% Tests
 %%=============================================================================
+
+t_register_ok(_Cfg) ->
+    ReqURL = "https://localhost:8443/register",
+    ReqHeaders = [],
+    ReqMethod = get,
+    Request = {ReqURL, ReqHeaders},
+    ReqOptions = [],
+    ReqHTTPOptions = [{ssl, [{verify, verify_none}]}],
+    {ok, Response} = httpc:request(ReqMethod, Request, ReqHTTPOptions, ReqOptions),
+    {Status, Headers, BodyRaw} = Response,
+    {_HttpVsn, StatusCode, _StatusMsg} = Status,
+    ct:log("Status: ~p", [Status]),
+    ct:log("Headers: ~p", [Headers]),
+    ct:log("BodyRaw: ~s", [BodyRaw]),
+    ParseJSON = hope_result:lift_exn(fun jsx:decode/1),
+    BodyParseResult = ParseJSON(list_to_binary(BodyRaw)),
+    ct:log("BodyParseResult: ~p", [BodyParseResult]),
+    {ok, BodyParsed} = BodyParseResult,
+    {some, _} = hope_kv_list:get(BodyParsed, <<"id">>),
+    {some, _} = hope_kv_list:get(BodyParsed, <<"secret">>),
+    200 = StatusCode,
+    ok.
 
 t_initiate_ok(_Cfg) ->
     ClientID = register_client(),

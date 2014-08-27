@@ -100,7 +100,11 @@ routes() ->
                 end,
             bstr:join([<<>> | URIPath], <<"/">>)
         end,
-    [ { MakeURI([<<"initiate">>])
+    [ { MakeURI([<<"register">>])
+      , oauth1_srv_handler_register
+      , []
+      }
+    , { MakeURI([<<"initiate">>])
       , oauth1_srv_handler_initiate
       , []
       }
