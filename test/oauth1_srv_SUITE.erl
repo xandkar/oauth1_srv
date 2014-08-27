@@ -49,15 +49,14 @@ end_per_suite(_Cfg) ->
 
 t_initiate_ok(_Cfg) ->
     ClientID = register_client(),
-    Realm = <<"oblivion">>,
-    ReqURL = "https://localhost:8443/initiate",
-    Callback = <<"https://client/ready">>,
-
-    Signature           = <<"PZSLye5xlqQFa5YkRW1wbST2DI4=">>,
-    SignatureMethod     = <<"HMAC-SHA1">>,
-    Timestamp           = <<"123456789">>,
-    Nonce               = <<"foofoobahbah">>,
-
+    Realm           = <<"oblivion">>,
+    ReqURL          = "https://localhost:8443/initiate",
+    Callback        = <<"https://client/ready">>,
+    % TODO: Verify signature with hueniverse guide.
+    Signature       = <<"PZSLye5xlqQFa5YkRW1wbST2DI4=">>,
+    SignatureMethod = <<"HMAC-SHA1">>,
+    Timestamp       = <<"123456789">>,
+    Nonce           = <<"foofoobahbah">>,
     Params =
         [ {?PARAM_REALM            , Realm}
         , {?PARAM_CONSUMER_KEY     , ClientID}
