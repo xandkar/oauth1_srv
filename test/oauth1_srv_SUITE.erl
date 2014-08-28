@@ -14,10 +14,18 @@
 -export(
     [ t_register_ok/1
     , t_initiate_ok/1
+    , t_authorize/1
     ]).
 
 
 -define(GROUP, oauth1_srv).
+
+
+-record(state,
+    { tmp_token_id     = none :: hope_option:t(binary())
+    , tmp_token_secret = none :: hope_option:t(binary())
+    , verifier         = none :: hope_option:t(binary())
+    }).
 
 
 %%=============================================================================
@@ -31,6 +39,7 @@ groups() ->
     Tests =
         [ t_register_ok
         , t_initiate_ok
+        , t_authorize
         ],
     Properties = [],
     [ {?GROUP, Properties, Tests}
@@ -112,10 +121,47 @@ t_initiate_ok(_Cfg) ->
     BodyParseResult = ParseQS(list_to_binary(BodyRaw)),
     ct:log("BodyParseResult: ~p", [BodyParseResult]),
     {ok, BodyParsed} = BodyParseResult,
-    {some, _} = hope_kv_list:get(BodyParsed, <<"oauth_token">>),
-    {some, _} = hope_kv_list:get(BodyParsed, <<"oauth_token_secret">>),
+    BP = BodyParsed,
+    {some, TmpTokenID}     = hope_kv_list:get(BP, <<"oauth_token">>),
+    {some, TmpTokenSecret} = hope_kv_list:get(BP, <<"oauth_token_secret">>),
     200 = StatusCode,
-    ok.
+    State = #state
+        { tmp_token_id     = {some, TmpTokenID}
+        , tmp_token_secret = {some, TmpTokenSecret}
+        },
+    state_return(State).
+
+t_authorize(Cfg) ->
+    State1 = state_get(Cfg, t_initiate_ok),
+    #state
+        { tmp_token_id     = {some, TmpTokenID}
+        , tmp_token_secret = {some, _TmpTokenSecret}
+        } = State1,
+    TmpTokenIDStr = binary_to_list(TmpTokenID),
+    ReqURL = "https://localhost:8443/authorize?oauth_token=" ++ TmpTokenIDStr,
+    ReqHeaders = [],
+    ReqMethod = get,
+    Request = {ReqURL, ReqHeaders},
+    ReqOptions = [],
+    ReqHTTPOptions =
+        [ {ssl          , [{verify, verify_none}]}
+        , {autoredirect , false}
+        ],
+    {ok, Response} = httpc:request(ReqMethod, Request, ReqHTTPOptions, ReqOptions),
+    {Status, Headers, BodyRaw} = Response,
+    {_HttpVsn, StatusCode, _StatusMsg} = Status,
+    ct:log("Status: ~p", [Status]),
+    ct:log("Headers: ~p", [Headers]),
+    ct:log("BodyRaw: ~s", [BodyRaw]),
+    {some, CallbackStr} = hope_kv_list:get(Headers, "location"),
+    CallbackBin = list_to_binary(CallbackStr),
+    {ok, CallbackURI} = oauth1_uri:of_bin(CallbackBin),
+    CallbackParams = oauth1_uri:get_query(CallbackURI),
+    ct:log("CallbackParams: ~p", [CallbackParams]),
+    {some, TmpTokenID} = hope_kv_list:get(CallbackParams, <<"oauth_token">>),
+    {some, Verifier}   = hope_kv_list:get(CallbackParams, <<"oauth_verifier">>),
+    _State2 = State1#state{verifier={some, Verifier}},
+    303 = StatusCode.
 
 
 %%=============================================================================
@@ -128,3 +174,10 @@ register_client() ->
     ClientCreds  = oauth1_credentials:cons(client, ClientID, ClientSecret),
     {ok, ok}     = oauth1_credentials:store(ClientCreds),
     ClientID.
+
+state_return(State) ->
+    {save_config, State}.
+
+state_get(Cfg, NameOfSetterTestCase) ->
+    {some, {NameOfSetterTestCase, State}} = hope_kv_list:get(Cfg, saved_config),
+    State.
