@@ -1,5 +1,7 @@
 -module(oauth1_srv_handler_token).
 
+-include_lib("oauth1_core/include/oauth1_parameter_names.hrl").
+
 -export(
     % Cowboy
     [ init/3
@@ -114,12 +116,11 @@ content_handler(R1, #state{}=S) ->
                     TokenSecret = oauth1_credentials:get_secret(Token),
                     {token, <<TokenIDBin/binary>>    } = TokenID,
                     {token, <<TokenSecretBin/binary>>} = TokenSecret,
-                    Body =
-                        % TODO: Use cow_qs:qs/1
-                        << "oauth_token"             , "=" , TokenIDBin/binary
-                         , "&"
-                         , "oauth_token_secret"      , "=" , TokenSecretBin/binary
-                        >>,
+                    TokenCredentials =
+                        [ {?PARAM_TOKEN        , TokenIDBin}
+                        , {?PARAM_TOKEN_SECRET , TokenSecretBin}
+                        ],
+                    Body = cow_qs:qs(TokenCredentials),
                     R4 = cowboy_req:set_resp_body(Body, R3),
                     {true, R4, S}
             end

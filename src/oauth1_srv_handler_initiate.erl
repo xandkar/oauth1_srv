@@ -1,5 +1,7 @@
 -module(oauth1_srv_handler_initiate).
 
+-include_lib("oauth1_core/include/oauth1_parameter_names.hrl").
+
 -export(
     % Cowboy
     [ init/3
@@ -116,14 +118,12 @@ content_handler(R1, #state{}=S) ->
                     {tmp, <<TmpTokenIDBin/binary>>    } = TmpTokenID,
                     {tmp, <<TmpTokenSecretBin/binary>>} = TmpTokenSecret,
                     IsCallbackConfirmedBin = boolean_to_bin(IsCallbackConfirmed),
-                    Body =
-                        % TODO: Use cow_qs:qs/1
-                        << "oauth_token"             , "=" , TmpTokenIDBin/binary
-                         , "&"
-                         , "oauth_token_secret"      , "=" , TmpTokenSecretBin/binary
-                         , "&"
-                         , "oauth_callback_confirmed", "=" , IsCallbackConfirmedBin/binary
-                        >>,
+                    TokenCredentialsAndCallbackInfo =
+                        [ {?PARAM_TOKEN              , TmpTokenIDBin}
+                        , {?PARAM_TOKEN_SECRET       , TmpTokenSecretBin}
+                        , {?PARAM_CALLBACK_CONFIRMED , IsCallbackConfirmedBin}
+                        ],
+                    Body = cow_qs:qs(TokenCredentialsAndCallbackInfo),
                     R4 = cowboy_req:set_resp_body(Body, R3),
                     {true, R4, S}
             end
