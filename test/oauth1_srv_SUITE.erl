@@ -92,16 +92,35 @@ t_initiate_ok(_Cfg) ->
     Realm           = <<"oblivion">>,
     ReqURL          = "https://localhost:8443/initiate",
     Callback        = <<"https://client/ready">>,
-    % TODO: Verify signature with hueniverse guide.
-    Signature       = <<"PZSLye5xlqQFa5YkRW1wbST2DI4=">>,
-    SignatureMethod = <<"HMAC-SHA1">>,
     Timestamp       = <<"123456789">>,
+    TimestampInt    =    123456789,
+    {ok, CallbackURI} = oauth1_uri:of_bin(Callback),
+    {ok, ResourceURI} = oauth1_uri:of_bin(list_to_binary(ReqURL)),
+    Resource        = oauth1_resource:cons(Realm, ResourceURI),
     Nonce           = <<"foofoobahbah">>,
+    SigMeth         = 'HMAC_SHA1',
+    SigMethBin      = oauth1_signature:method_to_bin(SigMeth),
+    SigArgs = #oauth1_signature_args_cons
+        { method               = SigMeth
+        , http_req_method      = <<"POST">>
+        , http_req_host        = <<"localhost">>
+        , resource             = Resource
+        , consumer_key         = {client, ClientID}
+        , timestamp            = TimestampInt
+        , nonce                = Nonce
+        , client_shared_secret = {client, ClientSecret}
+        , token                = none
+        , verifier             = none
+        , callback             = {some, CallbackURI}
+        , version              = none
+        },
+    Sig       = oauth1_signature:cons(SigArgs),
+    SigDigest = oauth1_signature:get_digest(Sig),
     Params =
         [ {?PARAM_REALM            , Realm}
         , {?PARAM_CONSUMER_KEY     , ClientID}
-        , {?PARAM_SIGNATURE        , Signature}
-        , {?PARAM_SIGNATURE_METHOD , SignatureMethod}
+        , {?PARAM_SIGNATURE        , SigDigest}
+        , {?PARAM_SIGNATURE_METHOD , SigMethBin}
         , {?PARAM_TIMESTAMP        , Timestamp}
         , {?PARAM_NONCE            , Nonce}
         , {?PARAM_CALLBACK         , Callback}
