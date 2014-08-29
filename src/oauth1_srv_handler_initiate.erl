@@ -65,18 +65,18 @@ is_authorized(R1, #state{}=S) ->
 content_handler(R1, #state{}=S) ->
     lager:info("Begin content_handler."),
     lager:info("Set resourse URI."),
-    % TODO: Grab host and endpoint from request. Duh!
-    {ok, URI} = oauth1_uri:of_bin(<<"http://localhost/initiate">>),
+    {ReqURL, R2} = cowboy_req:url(R1),
+    {ok, URI} = oauth1_uri:of_bin(ReqURL),
     lager:info("Get authorization header."),
-    case cowboy_req:header(<<"authorization">>, R1)
-    of  {undefined, R2} ->
+    case cowboy_req:header(<<"authorization">>, R2)
+    of  {undefined, R3} ->
             lager:info("Error: header missing: \"authorization\"."),
             ErrorData =
                [{<<"error">>, [{<<"header_missing">>, <<"authorization">>}]}],
             Body = jsx:encode(ErrorData),
-            R3 = cowboy_req:set_resp_body(Body, R2),
-            {false, R3, S}
-    ;   {<<Authorization/binary>>, R2} ->
+            R4 = cowboy_req:set_resp_body(Body, R3),
+            {false, R4, S}
+    ;   {<<Authorization/binary>>, R3} ->
             lager:info("OK: got \"authorization\" header: ~p.", [Authorization]),
             Steps =
                 [ fun oauth1_parameters:of_http_header_authorization/1
@@ -95,19 +95,19 @@ content_handler(R1, #state{}=S) ->
                         ],
                     % TODO: Resolve this violation of declared content type:
                     Body = jsx:encode(ErrorData),
-                    R3 = cowboy_req:set_resp_body(Body, R2),
-                    {false, R3, S}
+                    R4 = cowboy_req:set_resp_body(Body, R3),
+                    {false, R4, S}
             ;   {error, {bad_request, _}=Error} ->
                     lager:info("Request error: ~p", [Error]),
                     Body = oauth1_server:error_to_bin(Error),
-                    R3 = cowboy_req:set_resp_body(Body, R2),
-                    {false, R3, S}
+                    R4 = cowboy_req:set_resp_body(Body, R3),
+                    {false, R4, S}
             ;   {error, {unauthorized, _}=Error} ->
                     lager:info("Request error: ~p", [Error]),
                     Body = oauth1_server:error_to_bin(Error),
-                    R3 = cowboy_req:set_resp_body(Body, R2),
-                    {ok, R4} = cowboy_req:reply(401, R3),
-                    {halt , R4, S}
+                    R4 = cowboy_req:set_resp_body(Body, R3),
+                    {ok, R5} = cowboy_req:reply(401, R4),
+                    {halt , R5, S}
             ;   {ok, {TmpToken, IsCallbackConfirmed}=Ok} ->
                     lager:info("Request OK: ~p", [Ok]),
                     Tmp = TmpToken,
@@ -124,8 +124,8 @@ content_handler(R1, #state{}=S) ->
                          , "&"
                          , "oauth_callback_confirmed", "=" , IsCallbackConfirmedBin/binary
                         >>,
-                    R3 = cowboy_req:set_resp_body(Body, R2),
-                    {true, R3, S}
+                    R4 = cowboy_req:set_resp_body(Body, R3),
+                    {true, R4, S}
             end
     end.
 
