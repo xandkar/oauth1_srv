@@ -82,13 +82,21 @@ t_register_ok(_Cfg) ->
     BodyParseResult = ParseJSON(list_to_binary(BodyRaw)),
     ct:log("BodyParseResult: ~p", [BodyParseResult]),
     {ok, BodyParsed} = BodyParseResult,
-    {some, _} = hope_kv_list:get(BodyParsed, <<"id">>),
-    {some, _} = hope_kv_list:get(BodyParsed, <<"secret">>),
+    {some, ClientID}     = hope_kv_list:get(BodyParsed, <<"id">>),
+    {some, ClientSecret} = hope_kv_list:get(BodyParsed, <<"secret">>),
     200 = StatusCode,
-    ok.
+    State = #state
+        { client_id     = {some, ClientID}
+        , client_secret = {some, ClientSecret}
+        },
+    state_return(State).
 
-t_initiate_ok(_Cfg) ->
-    {ClientID, ClientSecret} = register_client(),
+t_initiate_ok(Cfg) ->
+    State1 = state_get(Cfg, t_register_ok),
+    #state
+        { client_id     = {some, ClientID}
+        , client_secret = {some, ClientSecret}
+        } = State1,
     Realm           = <<"oblivion">>,
     ReqURL          = "https://localhost:8443/initiate",
     Callback        = <<"https://client/ready">>,
@@ -151,13 +159,11 @@ t_initiate_ok(_Cfg) ->
     {some, TmpTokenID}     = hope_kv_list:get(BP, <<"oauth_token">>),
     {some, TmpTokenSecret} = hope_kv_list:get(BP, <<"oauth_token_secret">>),
     200 = StatusCode,
-    State = #state
+    State2 = State1#state
         { tmp_token_id     = {some, TmpTokenID}
         , tmp_token_secret = {some, TmpTokenSecret}
-        , client_id        = {some, ClientID}
-        , client_secret    = {some, ClientSecret}
         },
-    state_return(State).
+    state_return(State2).
 
 t_authorize(Cfg) ->
     State1 = state_get(Cfg, t_initiate_ok),
@@ -274,13 +280,6 @@ t_token_ok(Cfg) ->
 %%=============================================================================
 %% Helpers
 %%=============================================================================
-
-register_client() ->
-    ClientID     = <<"hero-of-kvatch">>,
-    ClientSecret = <<"thereisnosword">>,
-    ClientCreds  = oauth1_credentials:cons(client, ClientID, ClientSecret),
-    {ok, ok}     = oauth1_credentials:store(ClientCreds),
-    {ClientID, ClientSecret}.
 
 state_return(State) ->
     {save_config, State}.
